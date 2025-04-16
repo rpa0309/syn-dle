@@ -1,1 +1,5 @@
-
+happy	cheerful
+large	vast
+small	compact
+smart	clever
+swift	quick
