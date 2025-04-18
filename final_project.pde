@@ -1,6 +1,8 @@
 import processing.sound.*;
 SoundFile enter;
 SoundFile win;
+SoundFile lose;
+SoundFile background;
 
 PImage title;
 PImage title2;
@@ -34,6 +36,8 @@ void setup(){
   
   enter = new SoundFile(this, "submitSound.mp3");
   win = new SoundFile(this, "winSound.mp3");
+  lose = new SoundFile(this, "lose.mp3");
+  background = new SoundFile(this, "backgroundSound.mp3");
   
   background(colors[0]);
   
@@ -41,7 +45,8 @@ void setup(){
 }
 
 void draw(){
-  if(gameBegin){
+  if(gameBegin){ //draws menu screen
+     background.loop();
     //starting screen
     image(title, 0, 0);
     
@@ -59,7 +64,7 @@ void draw(){
     gameBegin = false;
   }
   
-  if(diffChanged){
+  if(diffChanged){ //draws difficulty selection screen
     image(title2, 0, 0);
     //title
     fill(colors[1]);
@@ -79,7 +84,7 @@ void draw(){
     text("Hard", 215, 385); 
   }
   
-  if(gameStart){
+  if(gameStart){ //draws gameplay board
     //pick the solution
     String[] sol = new String[5];
     String[] list = split(solutionPairs[int(random(solutionPairs.length))], '\t');
@@ -155,19 +160,18 @@ void mousePressed(){
     if(win.isPlaying()){
       win.pause();
     }
+    if(lose.isPlaying()){
+      lose.pause();
+    }
   }
 }
 
 void keyTyped(){
-  int[] index = game.getAttempt();
+  int[] index = game.getAttempt(); //get the current letter and guess attempt index
   //if alphabetic key pressed, add to current index of guesses
   if (key <= 122 && key >= 97 && gameRunning) {
     if(index[0] != -1 && index[1] != -1 && game.getGuess()[index[1]] == null){
       game.updateCurrentGuess(str(key));      
-    } else{
-      //handle no attempts left
-      background(colors[0]);
-      println("letter no attempts");
     }
   }
   //if enter is pressed, check that there is a valid guess, and add to guesses board
@@ -194,12 +198,12 @@ class Board{
   String[] solution;
   String syn;
   
-  Board(String syn, String[] sol){
+  Board(String syn, String[] sol){ // creates a board from a syn and a solution
     this.syn = syn;
     solution = sol;
   }
-  
-  void updateCurrentGuess(String a){
+  //takes in a string (a key typed by the user) and adds it to the current guess arr & board
+  void updateCurrentGuess(String a){ 
     int[] index = getAttempt();
     guess[index[1]] = a;
     board[index[0]][index[1]] = a;
@@ -208,10 +212,12 @@ class Board{
     text(key, 120+(55*index[1]), 170+(55*index[0])); 
   }
   
+  //ensures that the new guess is clear after each guess is submitted by the user
   void clearCurrentGuess(){
     guess = new String[5];
   }
   
+  //returns the proper visual feedback for the user's guess based on difficulty level
   void guessInfo(int j){
     if(j < 0){
       j = 5;
@@ -242,20 +248,24 @@ class Board{
          text(guess[i], 120+(55*i), 170+(55*j)); 
        }
    }
-   if(checkWinner()){
+   if(checkWinner()){ //check if win conditions have been met, display win screen
      fill(colors[0]);
      stroke(colors[0]);
      rect(100,0, 300, 500);
      image(won, 0, 0);
+     background.pause();
      win.loop();
-   } else if(j == 5){
+   } else if(j == 5){ //if guess attempts have been used, display lose screen
      fill(colors[0]);
      stroke(colors[0]);
      rect(100,0, 300, 500);
-     image(lost, 0, 0);
+     image(lost, 0, 100);
+     background.pause();
+     lose.loop();
    }
   }
   
+  //check that each letter of guess is equal to each letter of solution
   boolean checkWinner(){
     for(int i = 0; i < 5; i++){
       if(!guess[i].equals(solution[i])){
@@ -265,10 +275,7 @@ class Board{
     return true;
   }
   
-  void printBoard(){
-    print(board[0][0]);
-  }
-  
+  //return the proper guess attempt and letter attempt as an int arr
   int[] getAttempt(){
     int[] sols = {-1, -1};
     for(int i = 0; i < 6; i++){
@@ -283,11 +290,11 @@ class Board{
     return sols;
   }
   
-  String[] getSol(){
+  String[] getSol(){ //return the solution
     return solution;
   }
   
-  String[] getGuess(){
+  String[] getGuess(){ //return the guess
     return guess;
   }
 }
